@@ -28,7 +28,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
         //Sanity check
         if (((inputArray[i] >> kHeaderShift) & kHeaderMask) == config_.econdHeaderMarker) {
             econdHeader=inputArray[i];
-            std::cout<<std::endl<<"ECOND="<<std::dec<<econd<<std::endl<<"First word of ECOND header = 0x"<<std::hex<<std::setfill('0') << std::setw(8)<<econdHeader<<std::endl; //Length of ECON-D header
+            std::cout<<std::endl<<"packet number="<<std::dec<<econd<<std::endl<<"First word of ECOND header = 0x"<<std::hex<<std::setfill('0') << std::setw(8)<<econdHeader<<std::endl; //Length of ECON-D header
         }
         else if(((inputArray[i] >> kidleHeaderShift) & kidleHeaderMask) == config_.idleHeaderMarker){
             i++;
@@ -69,7 +69,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
         //ECON-D body
         if (((econdHeader >> kPassThroughShift)& kPassThroughMask) == 0) {
             //standard ECOND
-            std::cout<<"Standard ECOND";
+            std::cout<<"Standard ECOND"<<std::endl;
             enabledERX = enabledERXMapping(econd);
             for(erx = 0; erx < config_.econdERXMax; erx++) {										
                 //loop through eRx 
@@ -77,7 +77,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
                 if((enabledERX >> erx & 1) == 0) continue;
                 //eRX subpacket header
                 //common mode
-                std::cout<<"ECOND:erx="<<econd<<":"<<erx<<std::endl
+                std::cout<<"packet:erx="<<econd<<":"<<erx<<std::endl
                 <<"First word of the erx header = 0x"<<std::hex<<std::setfill('0') << std::setw(8)<<inputArray[i]<<std::endl;
                 std::cout
                 <<"Stat = 0b"<<std::bitset<3>((inputArray[i] >> keRxStatShift) & keRxStatMask)
@@ -106,7 +106,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
                     //Loop through channels in eRx
                     //Pick active channels
                     if (((erxHeader >> channel) & 1)==0) continue;
-                    std::cout<<std::dec<<"  ECOND:erx:channel = "<<econd<<":"<<erx<<":"<<channel;
+                    std::cout<<std::dec<<"  packet:erx:channel = "<<econd<<":"<<erx<<":"<<channel;
                     tempIndex = bitCounter / 32 + i;
                     tempBit = bitCounter % 32;
                     if (tempBit == 0)
@@ -143,7 +143,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
         }
         else {
         //Pass through ECOND
-            std::cout<<"Pass through ECOND";
+            std::cout<<"Pass through ECOND"<<std::endl;
             enabledERX = enabledERXMapping(econd);
             for(erx = 0; erx < config_.econdERXMax; erx++) {										
                 //loop through eRx 
@@ -152,7 +152,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
                 //eRX subpacket header
                 //common mode
                 
-                std::cout<<"ECOND:erx="<<econd<<":"<<erx<<std::endl
+                std::cout<<"packet:erx="<<econd<<":"<<erx<<std::endl
                 <<"First word of the erx header = 0x"<<std::hex<<std::setfill('0') << std::setw(8)<<inputArray[i]<<std::endl;
                 std::cout
                 <<"Stat = 0b"<<std::bitset<3>((inputArray[i] >> keRxStatShift) & keRxStatMask)
@@ -177,7 +177,7 @@ void HGCalUnpacker::parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_
                 for (channel = 0; channel < config_.erxChannelMax; channel++)
                 {
                     //loop through channels in eRx
-                    std::cout<<std::dec<<"  ECOND:erx:channel = "<<econd<<":"<<erx<<":"<<channel;
+                    std::cout<<std::dec<<"  packet:erx:channel = "<<econd<<":"<<erx<<":"<<channel;
                     uint32_t readout = inputArray[i];
                     std::cout<<", TcTp = 0b{:b}"<<std::bitset<2>(readout>>30)
                     <<std::dec
