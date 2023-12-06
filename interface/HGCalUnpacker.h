@@ -6,20 +6,7 @@ Huilin Qu, CERN
 Last Modified: 
 
 Description: 
-This class is designed to unpack raw data from HGCal, formatted as S-Links, Capture blocks, and ECONDs, to HGCROC channel data.
 
-Functions in this class are
-
-parse<raw data format>(uint32_t* inputArray, uint32_t inputSize, uint16_t (*enabledERXMapping)(uint16_t sLink, uint8_t captureBlock, uint8_t econd),D (*logicalMapping)(HGCalElectronicsId elecID)):
-parse input in corresponding raw data format. Threes function are written, with reusable code pieces not integrated in functions, to improve performance 
-inputArray: input as 32-bits words.
-inputSize: size of input array.
-(*enabledERXMapping(uint16_t sLink, uint8_t captureBlock, uint8_t econd): map from slink, capture block, econd indices to enabled erx in this econd 
-(*logicalMapping)(HGCalElectronicsId elecID): logical mapping from HGCalElectronicsId to class D as ID
-
-getChannelData(): return vector of HGCROCChannelDataFrame<D>(ID,value)
-getCommonModeData(): return vector of 16-bit common mode data, lowest 10 bits is the ADC of the common mode, padding to 4 for half ROC turned on
-getCommonModeIndex(): return vector of 32-bit index, the length is the same as getChannelData(), link from channel data to the first common mode on ROC (+0,+1,+2,+3 for all four common modes)
 */
 
 #ifndef EventFilter_HGCalRawToDigi_HGCalUnpacker_h
@@ -30,7 +17,9 @@ getCommonModeIndex(): return vector of 32-bit index, the length is the same as g
 #include <string>
 #include <bitset>
 #include <iostream>
-#include  <iomanip>
+#include <iomanip>
+#include <fstream>
+
 struct HGCalUnpackerConfig {
 	uint32_t sLinkBOE=0x00;                    //SLink BOE pattern
 	uint32_t captureBlockReserved=0x3F;        //capture block reserved pattern
@@ -41,6 +30,46 @@ struct HGCalUnpackerConfig {
 	uint32_t econdERXMax=12;                   //maximum number of erx's in one ECOND, default to be 12 
 	uint32_t erxChannelMax=37;                 //maximum number of channels in one erx, default to be 37
 	uint32_t payloadLengthMax=469;             //maximum length of payload length
+};
+
+struct ChannelData{
+	uint32_t index;
+	std::bitset<2> TcTp;
+	uint16_t ADCm;
+	uint16_t ADCToT;
+	uint16_t ToA;
+};
+
+struct ERXData{
+	uint32_t index;
+	std::bitset<3> Stat;
+	std::bitset<3> Hamming;
+	std::bitset<1> F;
+	uint16_t commonMode0;
+	uint16_t commonMode1;
+	std::bitset<1> E;
+	std::bitset<37> channelmap;
+	std::vector<ChannelData> channelDataCollection;
+};
+
+struct ECONDData{
+	uint32_t index;
+	uint16_t payloadLength;
+	std::bitset<1> P;
+	std::bitset<1> E;
+	std::bitset<2> HT;
+	std::bitset<2> EBO;
+	std::bitset<1> M;
+	std::bitset<1> T;
+	std::bitset<6> Hamming;
+	uint16_t BXnumber;
+	uint8_t L1Anumber;
+	uint8_t Orbitnumber;
+	std::bitset<1> S;
+	std::bitset<2> RR;
+	std::bitset<8> CRC;
+	std::vector<ERXData> erxDataCollection;
+	uint32_t trailerCRC;
 };
 
 class HGCalUnpacker {
@@ -115,6 +144,8 @@ public:
     HGCalUnpackerConfig config_;
 
 	void parseECOND(uint32_t* inputArray, uint32_t inputSize, uint16_t (*enabledERXMapping)(uint32_t econd));
+	void printInfo(std::string path);
+	void printJSON(std::string path);
 
 
 private:
@@ -139,6 +170,7 @@ private:
 		0b11111111111111111111111111111111
 	};
 	const uint32_t erxBodyBits_[16]={24,16,24,24,32,32,32,32,32,32,32,32,32,32,32,32};
+	std::vector<ECONDData> econdDataCollection;
 };
 
 

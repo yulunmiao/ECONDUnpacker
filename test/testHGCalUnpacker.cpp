@@ -8,13 +8,18 @@ uint16_t enabledERXMapping (uint32_t econd){
 
 
 int main(int argc, char** argv){
-    std::string fname;
+    std::string ifname;
+    std::string ofname;
+    std::string jsonfname;
+    bool out=false,jsonout=false;
     for(int i=1;i<argc;i++){
 		std::string arg(argv[i]);
-		if(arg.find("--input")!=std::string::npos)   { fname=argv[i+1]; i++; }
+		if(arg.find("--input")!=std::string::npos)  { ifname=argv[i+1]; i++; }
+        if(arg.find("--output")!=std::string::npos) { ofname=argv[i+1]; out=true; i++; }
+        if(arg.find("--json")!=std::string::npos)   { jsonfname=argv[i+1]; jsonout=true; i++;}
 	}
     std::fstream fin; 
-    fin.open(fname, std::ios::in); 
+    fin.open(ifname, std::ios::in); 
     char comma;
     uint32_t temp;
     std::string line;
@@ -38,6 +43,7 @@ int main(int argc, char** argv){
         inputArray[i+2]=inputArray[i+3];
         inputArray[i+3]=temp;
     }
+    fin.close();
     /*
     for(unsigned int i=0;i<inputArray.size();i+=6){
         std::cout<<std::hex<<std::setfill('0') << std::setw(8)
@@ -54,7 +60,6 @@ int main(int argc, char** argv){
         <<inputArray[i+5]<<std::endl;
     }
     */
-
     /*
     uint32_t testInput[216]={
         0xf3359008,0x0108549e,0xe087a09b,0x67c76e8d,0x15f40889,0x7e124020
@@ -95,11 +100,16 @@ int main(int argc, char** argv){
         ,0x14240250,0xf6032943,0x02e52d23,0x919e02ac,0x8421688b,0x8eba509a
     };
     */
-
     HGCalUnpackerConfig config;
     config.econdHeaderMarker=0x1e6;
     HGCalUnpacker unpacker(config);
     unpacker.parseECOND(&inputArray[0],inputArray.size(),enabledERXMapping);
-
+    //unpacker.parseECOND(testInput,216,enabledERXMapping);
+    if(out){
+        unpacker.printInfo(ofname);
+    }
+    if(jsonout){
+        unpacker.printJSON(jsonfname);
+    }
     return 0;
 }
